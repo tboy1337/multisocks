@@ -21,9 +21,9 @@ pip install multisocks
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/multisocks.git
+git clone https://github.com/tboy1337/multisocks.git
 cd multisocks
-pip install -e .
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -61,9 +61,9 @@ Proxies are specified in the format: `protocol://[username:password@]hostname:po
 ### Setup Development Environment
 
 ```bash
-git clone https://github.com/yourusername/multisocks.git
+git clone https://github.com/tboy1337/multisocks.git
 cd multisocks
-pip install -e .
+pip install -r requirements.txt
 ```
 
 ### Run Tests
