@@ -110,10 +110,6 @@ pip install -r requirements.txt
 python -m unittest discover tests
 ```
 
-## PyPI Package
-
-This project is available on PyPI: [multisocks](https://pypi.org/project/multisocks/)
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
