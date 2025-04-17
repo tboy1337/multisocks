@@ -2,7 +2,7 @@ import asyncio
 import logging
 import random
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Set
 import socket
 
 from .proxy_info import ProxyInfo
@@ -12,15 +12,36 @@ logger = logging.getLogger(__name__)
 class ProxyManager:
     """Manages multiple SOCKS proxies, handling dispatch and health monitoring"""
     
-    def __init__(self, proxies: List[ProxyInfo]):
-        """Initialize with a list of proxies"""
+    def __init__(self, proxies: List[ProxyInfo], auto_optimize: bool = False):
+        """Initialize with a list of proxies
+        
+        Args:
+            proxies: List of ProxyInfo objects representing available proxies
+            auto_optimize: Whether to automatically optimize proxy usage based on bandwidth
+        """
         if not proxies:
             raise ValueError("At least one proxy must be provided")
         
-        self.proxies = proxies
+        self.all_proxies = proxies  # All available proxies
+        self.active_proxies = list(proxies)  # Currently active proxies
         self._index = 0
         self._total_weight = sum(p.weight for p in proxies)
         self._lock = asyncio.Lock()
+        self.auto_optimize = auto_optimize
+        
+        # For bandwidth optimization
+        self.bandwidth_tester = None
+        self.last_optimization_time = 0
+        self.optimization_interval = 600  # Optimize every 10 minutes
+        
+        # Import here to avoid circular imports
+        if auto_optimize:
+            try:
+                from multisocks.bandwidth import BandwidthTester
+                self.bandwidth_tester = BandwidthTester()
+            except ImportError:
+                logger.warning("BandwidthTester not available, auto-optimization disabled")
+                self.auto_optimize = False
         
         # Start health check task
         self._health_check_task = asyncio.create_task(self._health_check_loop())
@@ -37,13 +58,23 @@ class ProxyManager:
     async def get_proxy(self, target_host: str, target_port: int) -> ProxyInfo:
         """Get the next available proxy using weighted round-robin"""
         async with self._lock:
-            # First try to select from only healthy proxies
-            healthy_proxies = [p for p in self.proxies if p.alive]
+            # First try to select from only healthy active proxies
+            healthy_proxies = [p for p in self.active_proxies if p.alive]
             
-            # If no healthy proxies, try to use any proxy
+            # If no healthy proxies in active set, try all healthy proxies
             if not healthy_proxies:
-                logger.warning("No healthy proxies available, trying to use any proxy")
-                healthy_proxies = self.proxies
+                logger.warning("No healthy proxies in active set, checking all proxies")
+                healthy_proxies = [p for p in self.all_proxies if p.alive]
+            
+            # If still no healthy proxies, try to use any active proxy
+            if not healthy_proxies:
+                logger.warning("No healthy proxies available, trying to use any active proxy")
+                healthy_proxies = self.active_proxies
+            
+            # Last resort: try any proxy
+            if not healthy_proxies:
+                logger.warning("No active proxies available, trying any proxy")
+                healthy_proxies = self.all_proxies
             
             if not healthy_proxies:
                 raise RuntimeError("No proxies available")
@@ -70,11 +101,18 @@ class ProxyManager:
             return selected
     
     async def _health_check_loop(self) -> None:
-        """Periodically check the health of all proxies"""
+        """Periodically check the health of all proxies and optimize if needed"""
         while True:
             try:
                 await asyncio.sleep(30)  # Check every 30 seconds
                 await self._check_all_proxies()
+                
+                # Optimize proxy usage if auto-optimize is enabled
+                if self.auto_optimize and self.bandwidth_tester:
+                    current_time = time.time()
+                    if current_time - self.last_optimization_time >= self.optimization_interval:
+                        await self._optimize_proxy_usage()
+                        self.last_optimization_time = current_time
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -83,7 +121,7 @@ class ProxyManager:
     async def _check_all_proxies(self) -> None:
         """Check the health of all proxies"""
         tasks = []
-        for proxy in self.proxies:
+        for proxy in self.all_proxies:
             tasks.append(self._check_proxy(proxy))
         
         # Run health checks concurrently
@@ -91,14 +129,46 @@ class ProxyManager:
         
         # Update proxy statuses
         alive_count = 0
-        for i, proxy in enumerate(self.proxies):
+        for i, proxy in enumerate(self.all_proxies):
             if isinstance(results[i], Exception):
                 logger.debug(f"Health check for {proxy} failed: {results[i]}")
                 proxy.mark_failed()
             else:
                 alive_count += 1
         
-        logger.info(f"Health check completed: {alive_count}/{len(self.proxies)} proxies alive")
+        logger.info(f"Health check completed: {alive_count}/{len(self.all_proxies)} proxies alive")
+    
+    async def _optimize_proxy_usage(self) -> None:
+        """Dynamically adjust which proxies are active based on bandwidth needs"""
+        logger.info("Optimizing proxy usage based on bandwidth")
+        
+        try:
+            # Measure user's direct connection speed
+            user_bandwidth = await self.bandwidth_tester.measure_connection_speed()
+            if user_bandwidth <= 0:
+                logger.warning("Couldn't measure user bandwidth, using all healthy proxies")
+                return
+                
+            # Measure average proxy speed using a sample of proxies
+            healthy_proxies = [p for p in self.all_proxies if p.alive]
+            if not healthy_proxies:
+                logger.warning("No healthy proxies available for optimization")
+                return
+                
+            await self.bandwidth_tester.measure_proxy_speeds(healthy_proxies)
+            
+            # Calculate how many proxies we need
+            optimal_count = self.bandwidth_tester.calculate_optimal_proxy_count(healthy_proxies)
+            
+            # Select best proxies based on latency
+            sorted_proxies = sorted(healthy_proxies, key=lambda p: p.latency)
+            self.active_proxies = sorted_proxies[:optimal_count]
+            
+            logger.info(f"Optimized to use {len(self.active_proxies)} proxies out of {len(healthy_proxies)} healthy proxies")
+        except Exception as e:
+            logger.error(f"Error optimizing proxy usage: {e}")
+            # Fallback to using all healthy proxies
+            self.active_proxies = [p for p in self.all_proxies if p.alive]
     
     async def _check_proxy(self, proxy: ProxyInfo) -> bool:
         """Check if a proxy is alive by connecting to a known host"""

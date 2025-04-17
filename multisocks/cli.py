@@ -62,13 +62,13 @@ def parse_proxy_string(proxy_str: str) -> ProxyInfo:
         weight=weight
     )
 
-async def start_server(bind_host: str, bind_port: int, proxies: List[ProxyInfo], debug: bool) -> None:
+async def start_server(bind_host: str, bind_port: int, proxies: List[ProxyInfo], debug: bool, auto_optimize: bool) -> None:
     """Start the SOCKS proxy server"""
     # Configure debug logging if enabled
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
     
-    proxy_manager = ProxyManager(proxies)
+    proxy_manager = ProxyManager(proxies, auto_optimize=auto_optimize)
     server = SocksServer(proxy_manager)
     
     try:
@@ -79,6 +79,15 @@ async def start_server(bind_host: str, bind_port: int, proxies: List[ProxyInfo],
         logger.error(f"Server error: {e}")
     finally:
         await server.stop()
+
+def read_proxies_from_file(file_path: str) -> List[str]:
+    """Read proxy strings from a text file (one per line)"""
+    try:
+        with open(file_path, 'r') as f:
+            # Read lines, strip whitespace, and filter out empty lines and comments
+            return [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+    except Exception as e:
+        raise ValueError(f"Failed to read proxies from file {file_path}: {e}")
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="A SOCKS proxy that aggregates multiple remote SOCKS proxies")
@@ -93,8 +102,15 @@ def main() -> None:
                               help='Which IP to accept connections from (default: 127.0.0.1)')
     start_parser.add_argument('--port', '-p', type=int, default=1080,
                              help='Which port to listen on for connections (default: 1080)')
-    start_parser.add_argument('--proxies', '-x', required=True, nargs='+',
+    start_parser.add_argument('--auto-optimize', '-a', action='store_true',
+                             help='Automatically optimize the number of proxies used based on connection speed')
+    
+    # Create a mutually exclusive group for proxy specification
+    proxy_group = start_parser.add_mutually_exclusive_group(required=True)
+    proxy_group.add_argument('--proxies', '-x', nargs='+',
                              help='Remote proxies to dispatch to, in the form of protocol://[user:pass@]host:port[/weight]')
+    proxy_group.add_argument('--proxy-file', '-f', 
+                             help='Path to a text file containing proxy strings (one per line)')
     
     args = parser.parse_args()
     
@@ -109,17 +125,34 @@ def main() -> None:
     
     if args.command == 'start':
         try:
+            # Get proxy strings, either from command line or from file
+            if args.proxies:
+                proxy_strings = args.proxies
+            else:  # args.proxy_file is set due to mutually exclusive group
+                proxy_strings = read_proxies_from_file(args.proxy_file)
+                
+                if not proxy_strings:
+                    print(f"{Fore.RED}Error: No valid proxy strings found in file {args.proxy_file}{Style.RESET_ALL}")
+                    sys.exit(1)
+            
             # Parse proxy strings
-            proxies = [parse_proxy_string(p) for p in args.proxies]
+            proxies = [parse_proxy_string(p) for p in proxy_strings]
             
             # Start proxy server
             print(f"{Fore.GREEN}Starting SOCKS proxy server on {args.host}:{args.port}{Style.RESET_ALL}")
-            print(f"Dispatching to {len(proxies)} remote proxies:")
-            for proxy in proxies:
+            
+            if args.auto_optimize:
+                print(f"{Fore.YELLOW}Auto-optimization enabled: The proxy will dynamically adjust how many proxies to use{Style.RESET_ALL}")
+            
+            print(f"Loaded {len(proxies)} proxies:")
+            for proxy in proxies[:5]:  # Show first 5 proxies
                 print(f"  - {Fore.CYAN}{proxy}{Style.RESET_ALL}")
             
+            if len(proxies) > 5:
+                print(f"  - {Fore.CYAN}... and {len(proxies) - 5} more{Style.RESET_ALL}")
+            
             # Run the event loop
-            asyncio.run(start_server(args.host, args.port, proxies, args.debug))
+            asyncio.run(start_server(args.host, args.port, proxies, args.debug, args.auto_optimize))
         except ValueError as e:
             print(f"{Fore.RED}Error: {e}{Style.RESET_ALL}")
             sys.exit(1)
