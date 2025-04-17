@@ -1,0 +1,6 @@
+asyncio
+python-socks
+aiohttp
+colorama
+typing_extensions
+pysocks 
