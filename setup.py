@@ -28,7 +28,8 @@ setup(
         "aiohttp",
         "colorama",
         "typing_extensions",
-        "pysocks"
+        "pysocks",
+        "statistics"
     ],
     entry_points={
         "console_scripts": [

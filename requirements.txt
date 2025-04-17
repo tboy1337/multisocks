@@ -3,4 +3,5 @@ python-socks
 aiohttp
 colorama
 typing_extensions
-pysocks 
+pysocks
+statistics 
