@@ -70,8 +70,27 @@ async def start_server(bind_host: str, bind_port: int, proxies: List[ProxyInfo],
     
     proxy_manager = ProxyManager(proxies, auto_optimize=auto_optimize)
     server = SocksServer(proxy_manager)
-    
+
+    async def progress_callback(event: str, data: dict):
+        if event == "cycle_start":
+            print(f"{Fore.YELLOW}--- Bandwidth/Proxy Optimization Cycle Started ---{Style.RESET_ALL}")
+        elif event == "user_bandwidth_progress":
+            print(f"{Fore.CYAN}Testing user bandwidth: {data.get('bytes', 0)//1024//1024} MB downloaded...{Style.RESET_ALL}", end='\r')
+        elif event == "user_bandwidth_done":
+            print(f"{Fore.GREEN}User bandwidth: {data.get('mbps', 0):.2f} Mbps{Style.RESET_ALL}")
+        elif event == "proxy_bandwidth_progress":
+            print(f"{Fore.CYAN}Testing proxy {data.get('proxy', '')}: {data.get('bytes', 0)//1024//1024} MB...{Style.RESET_ALL}", end='\r')
+        elif event == "proxy_bandwidth_done":
+            print(f"{Fore.GREEN}Proxy {data.get('proxy', '')} bandwidth: {data.get('mbps', 0):.2f} Mbps{Style.RESET_ALL}")
+        elif event == "proxy_bandwidth_avg":
+            print(f"{Fore.GREEN}Average proxy bandwidth: {data.get('mbps', 0):.2f} Mbps{Style.RESET_ALL}")
+        elif event == "cycle_done":
+            print(f"{Fore.YELLOW}Cycle done. User: {data.get('user_bandwidth_mbps', 0):.2f} Mbps, Proxy avg: {data.get('proxy_avg_bandwidth_mbps', 0):.2f} Mbps, Optimal proxies: {data.get('optimal_proxy_count', 0)}/{data.get('total_proxies', 0)}{Style.RESET_ALL}")
+
     try:
+        if auto_optimize:
+            # Start continuous optimization in the background
+            asyncio.create_task(proxy_manager.start_continuous_optimization(progress_callback=progress_callback))
         await server.start(bind_host, bind_port)
     except asyncio.CancelledError:
         logger.info("Server shutdown initiated")

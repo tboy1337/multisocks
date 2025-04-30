@@ -4,4 +4,5 @@ aiohttp
 colorama
 typing_extensions
 pysocks
-statistics 
+statistics
+aiohttp_socks 

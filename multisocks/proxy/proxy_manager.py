@@ -2,7 +2,7 @@ import asyncio
 import logging
 import random
 import time
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Tuple, Set, Callable
 import socket
 
 from .proxy_info import ProxyInfo
@@ -222,4 +222,11 @@ class ProxyManager:
         except Exception as e:
             logger.error(f"Unexpected error checking proxy {proxy}: {e}")
             proxy.mark_failed()
-            return False 
+            return False
+    
+    async def start_continuous_optimization(self, interval: int = 60, progress_callback: Optional[Callable[[str, dict], None]] = None):
+        """Start continuous bandwidth/proxy optimization with progress reporting."""
+        if not self.bandwidth_tester:
+            from multisocks.bandwidth import BandwidthTester
+            self.bandwidth_tester = BandwidthTester()
+        await self.bandwidth_tester.run_continuous_optimization(self.all_proxies, interval, progress_callback) 
