@@ -69,6 +69,7 @@ async def start_server(bind_host: str, bind_port: int, proxies: List[ProxyInfo],
         logging.getLogger().setLevel(logging.DEBUG)
     
     proxy_manager = ProxyManager(proxies, auto_optimize=auto_optimize)
+    await proxy_manager.start()
     server = SocksServer(proxy_manager)
 
     async def progress_callback(event: str, data: dict):

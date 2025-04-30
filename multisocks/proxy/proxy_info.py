@@ -53,4 +53,19 @@ class ProxyInfo:
         if self.latency == 0.0:
             self.latency = latency
         else:
-            self.latency = (self.latency * 0.7) + (latency * 0.3) 
+            self.latency = (self.latency * 0.7) + (latency * 0.3)
+
+    def __eq__(self, other):
+        if not isinstance(other, ProxyInfo):
+            return NotImplemented
+        return (
+            self.protocol == other.protocol and
+            self.host == other.host and
+            self.port == other.port and
+            self.username == other.username and
+            self.password == other.password and
+            self.weight == other.weight
+        )
+
+    def __hash__(self):
+        return hash((self.protocol, self.host, self.port, self.username, self.password, self.weight)) 

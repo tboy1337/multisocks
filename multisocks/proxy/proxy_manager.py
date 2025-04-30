@@ -43,8 +43,8 @@ class ProxyManager:
                 logger.warning("BandwidthTester not available, auto-optimization disabled")
                 self.auto_optimize = False
         
-        # Start health check task
-        self._health_check_task = asyncio.create_task(self._health_check_loop())
+        # Remove health check task creation from __init__
+        self._health_check_task = None
     
     async def stop(self):
         """Stop the health check task"""
@@ -223,6 +223,11 @@ class ProxyManager:
             logger.error(f"Unexpected error checking proxy {proxy}: {e}")
             proxy.mark_failed()
             return False
+    
+    async def start(self):
+        """Start the health check task. Must be called from an async context."""
+        if self._health_check_task is None:
+            self._health_check_task = asyncio.create_task(self._health_check_loop())
     
     async def start_continuous_optimization(self, interval: int = 60, progress_callback: Optional[Callable[[str, dict], None]] = None):
         """Start continuous bandwidth/proxy optimization with progress reporting."""
