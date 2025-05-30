@@ -1,6 +1,30 @@
 # MultiSocks
 
-A SOCKS proxy that aggregates multiple remote SOCKS proxies, increasing your bandwidth by distributing traffic across them.
+A SOCKS proxy that aggregates multiple remote SOCKS proxies, distributing traffic across them to increase overall bandwidth.
+
+## What MultiSocks Can Do
+
+- **Connection Distribution**: Routes different TCP connections through different proxies using a round-robin or weighted load balancing approach
+- **Increased Total Bandwidth**: Improves overall throughput for applications that make multiple concurrent connections
+- **Automatic Proxy Management**: Handles failed or slow proxies by routing around them
+- **Dynamic Optimization**: Automatically adjusts how many proxies to use based on your bandwidth needs
+- **Protocol Support**: Works with SOCKS4, SOCKS4a, SOCKS5, and SOCKS5h protocols
+- **Detailed Logging**: Provides visibility into proxy performance and connection routing
+
+## What MultiSocks Cannot Do
+
+- **True Channel Bonding**: Cannot split a single TCP connection across multiple proxies (single-connection speeds won't increase)
+- **UDP Bonding**: Does not currently support UDP traffic distribution
+- **Transport Layer Bonding**: Doesn't combine connections at the packet level like MPTCP or VPN bonding solutions
+- **Custom Protocols**: Only works with applications that support SOCKS proxy configuration
+
+## Ideal Use Cases
+
+MultiSocks works best with:
+- Web browsers (which open many connections to different resources)
+- Download managers that support multiple connections
+- Applications that establish multiple TCP connections
+- Scenarios where anonymity through multiple exit points is desired
 
 ## Features
 
