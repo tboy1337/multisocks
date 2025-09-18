@@ -1,0 +1,118 @@
+[MASTER]
+jobs=1
+suggestion-mode=yes
+unsafe-load-any-extension=no
+extension-pkg-allow-list=
+fail-under=9.0
+py-version=3.7
+
+[MESSAGES CONTROL]
+confidence=
+disable=raw-checker-failed,
+        bad-inline-option,
+        locally-disabled,
+        file-ignored,
+        suppressed-message,
+        useless-suppression,
+        deprecated-pragma,
+        use-symbolic-message-instead,
+        too-few-public-methods,
+        duplicate-code
+
+[REPORTS]
+output-format=text
+reports=no
+score=yes
+
+[REFACTORING]
+max-nested-blocks=5
+never-returning-functions=sys.exit,argparse.parse_error
+
+[FORMAT]
+expected-line-ending-format=CRLF
+ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+indent-after-paren=4
+indent-string='    '
+max-line-length=120
+max-module-lines=1000
+single-line-class-stmt=no
+single-line-if-stmt=no
+
+[LOGGING]
+logging-format-style=old
+logging-modules=logging
+
+[MISCELLANEOUS]
+notes=FIXME,
+      XXX,
+      TODO
+
+[SIMILARITIES]
+ignore-comments=yes
+ignore-docstrings=yes
+ignore-imports=no
+ignore-signatures=no
+min-similarity-lines=4
+
+[SPELLING]
+max-spelling-suggestions=4
+spelling-ignore-comment-directives=fmt: off,fmt: on,noqa:,noqa,nosec,isort:skip,mypy:
+
+[STRING]
+check-quote-consistency=no
+check-str-concat-over-line-jumps=no
+
+[TYPECHECK]
+contextmanager-decorators=contextlib.contextmanager
+generated-members=
+ignore-mixin-members=yes
+ignore-none=yes
+ignore-on-opaque-inference=yes
+ignored-classes=optparse.Values,thread._local,_thread._local
+ignored-modules=
+missing-member-hint=yes
+missing-member-hint-distance=1
+mixin-class-rgx=.*[Mm]ixin
+
+[VARIABLES]
+allow-global-unused-variables=yes
+allowed-redefined-builtins=
+callbacks=cb_,_cb
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_
+ignored-argument-names=_.*|^ignored_|^unused_
+init-import=no
+redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
+
+[CLASSES]
+defining-attr-methods=__init__,
+                      __new__,
+                      setUp,
+                      __post_init__
+exclude-protected=_asdict,
+                  _fields,
+                  _replace,
+                  _source,
+                  _make
+valid-classmethod-first-arg=cls
+valid-metaclass-classmethod-first-arg=cls
+
+[DESIGN]
+max-args=10
+max-attributes=15
+max-bool-expr=5
+max-branches=12
+max-locals=20
+max-parents=7
+max-public-methods=30
+max-returns=6
+max-statements=50
+min-public-methods=2
+
+[IMPORTS]
+allow-wildcard-with-all=no
+analyse-fallback-blocks=no
+deprecated-modules=optparse,tkinter.tix
+
+[EXCEPTIONS]
+overgeneral-exceptions=builtins.BaseException,
+                       builtins.Exception

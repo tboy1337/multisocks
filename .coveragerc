@@ -1,0 +1,67 @@
+[run]
+source = multisocks
+omit = 
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */env/*
+    */build/*
+    */dist/*
+    */.tox/*
+    */setup.py
+    */conftest.py
+branch = True
+parallel = True
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code
+    def __repr__
+    if self\.debug
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run
+    if 0:
+    if __name__ .__main__.:
+    if __name__.__main__.:
+    
+    # Don't complain about abstract methods, they aren't run
+    @(abc\.)?abstractmethod
+    
+    # Don't complain about type checking imports
+    if TYPE_CHECKING:
+    
+    # Don't complain about platform specific code
+    pragma: no cover
+    
+    # Don't complain about imports that may not be available
+    except ImportError:
+    except ModuleNotFoundError:
+    
+    # Don't complain about defensive code
+    except Exception:
+    pass
+
+ignore_errors = True
+show_missing = True
+precision = 2
+fail_under = 87.75
+
+[html]
+directory = htmlcov
+title = MultiSocks Coverage Report
+
+[xml]
+output = coverage.xml
+
+[json]
+output = coverage.json
+pretty_print = True

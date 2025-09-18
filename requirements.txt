@@ -1,0 +1,4 @@
+python-socks
+aiohttp
+aiohttp_socks
+colorama 
