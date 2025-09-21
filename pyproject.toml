@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multisocks"
+version = "1.0.6"
+authors = [
+    {name = "tboy1337", email = "obywhuie@anonaddy.com"},
+]
+description = "A SOCKS proxy that aggregates multiple remote SOCKS proxies"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Commercial Restricted License (CRL)"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Topic :: Internet :: Proxy Servers",
+    "Topic :: System :: Networking",
+]
+dependencies = [
+    "python-socks",
+    "aiohttp",
+    "aiohttp_socks",
+    "colorama",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/tboy1337/multisocks"
+"Bug Tracker" = "https://github.com/tboy1337/multisocks/issues"
+
+[project.scripts]
+multisocks = "multisocks.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["multisocks*"] 
