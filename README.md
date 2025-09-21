@@ -136,4 +136,4 @@ python -m unittest discover tests
 
 ## License
 
-This project is licensed under the CRL License - see the LICENSE.md file for details.
+This project is licensed under the CRL License - see the [LICENSE.md](LICENSE.md) file for details.
